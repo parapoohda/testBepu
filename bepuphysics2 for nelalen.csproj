@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <RootNamespace>bepuphysics2_for_nelalen</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Demos.contentarchive" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Demos.contentarchive" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\bepuphysics2\BepuPhysics\BepuPhysics.csproj" />
+    <ProjectReference Include="..\bepuphysics2\BepuUtilities\BepuUtilities.csproj" />
+    <ProjectReference Include="..\bepuphysics2\DemoContentLoader\DemoContentLoader.csproj" />
+    <ProjectReference Include="..\bepuphysics2\DemoRenderer\DemoRenderer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="GameObject\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Character\.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+  </ItemGroup>
+</Project>
