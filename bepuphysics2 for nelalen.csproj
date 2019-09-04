@@ -16,14 +16,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\bepuphysics2\BepuPhysics\BepuPhysics.csproj" />
-    <ProjectReference Include="..\bepuphysics2\BepuUtilities\BepuUtilities.csproj" />
-    <ProjectReference Include="..\bepuphysics2\DemoContentLoader\DemoContentLoader.csproj" />
-    <ProjectReference Include="..\bepuphysics2\DemoRenderer\DemoRenderer.csproj" />
+    <Folder Include="GameObject\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="GameObject\" />
+    <ProjectReference Include="..\MOL GAME\CSharp Lib\bepuphysics2\BepuPhysics\BepuPhysics.csproj" />
+    <ProjectReference Include="..\MOL GAME\CSharp Lib\bepuphysics2\BepuUtilities\BepuUtilities.csproj" />
+    <ProjectReference Include="..\MOL GAME\CSharp Lib\bepuphysics2\DemoRenderer\DemoRenderer.csproj" />
   </ItemGroup>
 
   <ItemGroup>
