@@ -79,12 +79,11 @@ namespace Com.Nelalen.GameObject
             isCalculateVelocityYet = true;
         }
 
-        internal void SetCharacterInput(BepuUtilities.Memory.BufferPool bufferpool, int bodyHandle, Simulation simulation)
+        internal void SetCharacterInput(CharacterControllers characterCTs,  int bodyHandle, Simulation simulation)
         {
-            characterControllers = new CharacterControllers(bufferpool);
             collider.bodyHandle = bodyHandle;
             
-            characterInput = new CharacterInput(characterControllers, bodyHandle, simulation, this.Position, new Capsule(0.5f, 1f), 0.1f, 1, 20, 100, 6, 4, MathF.PI * 0.4f);
+            characterInput = new CharacterInput(characterCTs, bodyHandle, simulation, this.Position, new Capsule(0.5f, 1f), 0.1f, 1, 20, 100, 6, 4, MathF.PI * 0.4f);
         }
 
         internal Capsule Shape() {

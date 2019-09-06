@@ -38,22 +38,24 @@ namespace bepuphysics2_for_nelalen
             camera.Yaw = MathF.PI;
             camera.Pitch = 0;
             characterCTs = new CharacterControllers(BufferPool);
+
             var collider = new BodyProperty<Collider>();
-            //Simulation = Simulation.Create(BufferPool, new CharacterNarrowphaseCallbacks(characters), new DemoPoseIntegratorCallbacks(new Vector3(0, -10, 0)));
-            Simulation = Simulation.Create(BufferPool, new MolCallbacks { Collider = collider }, new DemoPoseIntegratorCallbacks(new System.Numerics.Vector3(0, -10, 0)));
-            CreateCharacter(new Vector3(0, 2, -4));
+            Simulation = Simulation.Create(BufferPool, new CharacterNarrowphaseCallbacks(characterCTs), new DemoPoseIntegratorCallbacks(new Vector3(0, -10, 0)));
+            //Simulation = Simulation.Create(BufferPool, new MolCallbacks { Collider = collider, Characters= characterCTs }, new DemoPoseIntegratorCallbacks(new System.Numerics.Vector3(0, -10, 0)));
+            CreateCharacter(characterCTs,new Vector3(0, 2, -4),1);
+            CreateCharacter(characterCTs,new Vector3(0, 3, -2),2);
             Simulation.Statics.Add(new StaticDescription(new Vector3(0, 0, 0), new CollidableDescription(Simulation.Shapes.Add(new Box(200, 1, 200)), 0.1f)));
 
         }
         Character character;
         int bodyHandle;
-        void CreateCharacter(Vector3 position)
+        void CreateCharacter(CharacterControllers characterCTs, Vector3 position,int unitId)
         {
             var shape = new Capsule(0.5f, 1);
             var shapeIndex = Simulation.Shapes.Add(shape);
             bodyHandle = Simulation.Bodies.Add(BodyDescription.CreateDynamic(position, new BodyInertia { InverseMass = 1f / 1f  }, new CollidableDescription(shapeIndex, 0.1f), new BodyActivityDescription(shape.Radius * 0.02f)));
-            character = new Character(1,"test",this,position);
-            character.SetCharacterInput(BufferPool,bodyHandle,Simulation);
+            character = new Character(unitId, "test",this,position);
+            character.SetCharacterInput(characterCTs, bodyHandle,Simulation);
             characters.Add(character.UnitId,character);
             //Console.WriteLine($"characters[0]: {characters}");
 
@@ -63,10 +65,16 @@ namespace bepuphysics2_for_nelalen
         static Key MoveBackward = Key.S;
         static Key MoveRight = Key.D;
         static Key MoveLeft = Key.A;
+        int i = 0;
         internal void Update(Window window, Camera camera, Input input, float dt)
         {
-            Vector2 movementDirection = default;
-            movementDirection = new Vector2(0, 1);
+            i++;
+            if (i % 60 == 0) {
+                var Velo = character.VelocityInBepu.Linear;
+                Console.WriteLine($"x: {Velo.X} y: {Velo.Y} z: {Velo.Z}");
+            }
+            Vector2 movementDirection1 = new Vector2(1, 0);
+            Vector2 movementDirection2 = new Vector2(0, 1);
             /*
             if (input.IsDown(MoveForward))
             {
@@ -85,7 +93,11 @@ namespace bepuphysics2_for_nelalen
                 movementDirection += new Vector2(1, 0);
             }*/
             const float simulationDt = 1 / 60f;
-            character.CharacterInputt.UpdateCharacterGoals(movementDirection, character.MoveSpeed, camera, simulationDt);
+            characters.TryGetValue(1,out character);
+            character.CharacterInputt.UpdateCharacterGoals(movementDirection1, character.MoveSpeed, camera, simulationDt);
+
+            characters.TryGetValue(2, out character);
+            character.CharacterInputt.UpdateCharacterGoals(movementDirection2, character.MoveSpeed, camera, simulationDt);
             Simulation.Timestep(1 / 60f, ThreadDispatcher);
         }
 
@@ -120,9 +132,11 @@ namespace bepuphysics2_for_nelalen
     struct MolCallbacks : INarrowPhaseCallbacks
     {
         public BodyProperty<Collider> Collider;
+        public CharacterControllers Characters;
         public void Initialize(Simulation simulation)
         {
             Collider.Initialize(simulation.Bodies);
+            Characters.Initialize(simulation);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -189,9 +203,69 @@ namespace bepuphysics2_for_nelalen
         public void Dispose()
         {
             Collider.Dispose();
+            
         }
     }
 
+    struct CharacterNarrowphaseCallbacks : INarrowPhaseCallbacks
+    {
+        public CharacterControllers Characters;
+
+        public CharacterNarrowphaseCallbacks(CharacterControllers characters)
+        {
+            Characters = characters;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool AllowContactGeneration(int workerIndex, CollidableReference a, CollidableReference b)
+        {
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool AllowContactGeneration(int workerIndex, CollidablePair pair, int childIndexA, int childIndexB)
+        {
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void GetMaterial(out PairMaterialProperties pairMaterial)
+        {
+            pairMaterial = new PairMaterialProperties { FrictionCoefficient = 1, MaximumRecoveryVelocity = 2, SpringSettings = new SpringSettings(30, 1) };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe bool ConfigureContactManifold(int workerIndex, CollidablePair pair, ConvexContactManifold* manifold, out PairMaterialProperties pairMaterial)
+        {
+            GetMaterial(out pairMaterial);
+            Characters.TryReportContacts(pair, ref *manifold, workerIndex, ref pairMaterial);
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe bool ConfigureContactManifold(int workerIndex, CollidablePair pair, NonconvexContactManifold* manifold, out PairMaterialProperties pairMaterial)
+        {
+            GetMaterial(out pairMaterial);
+            Characters.TryReportContacts(pair, ref *manifold, workerIndex, ref pairMaterial);
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe bool ConfigureContactManifold(int workerIndex, CollidablePair pair, int childIndexA, int childIndexB, ConvexContactManifold* manifold)
+        {
+            return true;
+        }
+
+        public void Dispose()
+        {
+            Characters.Dispose();
+        }
+
+        public void Initialize(Simulation simulation)
+        {
+            Characters.Initialize(simulation);
+        }
+    }
     public struct DemoPoseIntegratorCallbacks : IPoseIntegratorCallbacks
     {
         public Vector3 Gravity;
